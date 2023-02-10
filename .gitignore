@@ -1,0 +1,4 @@
+.env
+postrequests/
+*.out
+*.json
