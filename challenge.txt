@@ -1,0 +1,1 @@
+{"token":"rE2TQByBNaQvt6BEUlUh5FLx","challenge":"afblTcrRdlsEQrnSF4U4hXXdat35EsPesAiEXnSgLuMjJgLXxMah","type":"url_verification"}
