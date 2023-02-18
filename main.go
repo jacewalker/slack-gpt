@@ -40,7 +40,7 @@ func main() {
 		switch event {
 		case "app_mention":
 			go processResponse(apiKey, slackObj)
-		case "member_joined_channel":
+		case "member_joined_channel": // this is inactive
 			user := slackObj.Event.User
 			prompt := fmt.Sprintf("Write a short welcome message to the new user, %s", user)
 			go openai.MakePrompt(prompt, apiKey, slackObj)
