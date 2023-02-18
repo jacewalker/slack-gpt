@@ -1,4 +1,4 @@
-// running on PID 1329858
+// running on PID 3402625
 // nohup ./myexecutable &
 // disown <pid>
 
@@ -10,14 +10,14 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jacewalker/slack-gpt/dbops"
 	"github.com/jacewalker/slack-gpt/openai"
 	"github.com/jacewalker/slack-gpt/slack"
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	err := godotenv.Load(".env")
-	if err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		log.Fatal("Error loading .env file")
 	}
 	apiKey := os.Getenv("OPENAI_AUTHKEY")
@@ -41,7 +41,6 @@ func main() {
 		case "app_mention":
 			go processResponse(apiKey, slackObj)
 		case "member_joined_channel":
-			// c.Status(http.StatusOK)
 			user := slackObj.Event.User
 			prompt := fmt.Sprintf("Write a short welcome message to the new user, %s", user)
 			go openai.MakePrompt(prompt, apiKey, slackObj)
@@ -55,10 +54,20 @@ func main() {
 
 func processResponse(apiKey string, slackObj slack.SlackEvent) {
 	prompt := slackObj.Event.Blocks[0].Elements1[0].Elements2[1].UserText
-	respType := openai.CheckPromptType(prompt, apiKey)
-	fmt.Println("Response Type is", respType)
+	// respType := openai.CheckPromptType(prompt, apiKey)
+	// fmt.Println("Response Type is", respType)
 
-	go openai.MakePrompt(prompt, apiKey, slackObj)
+	historyMap, _ := dbops.LookupFromDatabase(slackObj.Event.ThreadTS)
+	history := openai.CreateHistoricPrompt(historyMap, prompt)
+	fmt.Println("History String:\n", history)
+
+	completion := openai.MakePrompt(history, apiKey, slackObj)
+	dbops.SaveToDatabase(slackObj, completion)
+
+	err := slack.SendMessage(completion, slackObj)
+	if err != nil {
+		log.Println("[WARNING] Unable to send Slack Message:", err)
+	}
 
 	// switch respType {
 	// case "0":

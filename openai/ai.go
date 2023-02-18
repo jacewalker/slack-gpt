@@ -2,6 +2,7 @@ package openai
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"strings"
 
@@ -15,8 +16,8 @@ func MakePrompt(prompt string, apiKey string, object slack.SlackEvent) (response
 
 	req := gogpt.CompletionRequest{
 		Model:       gogpt.GPT3TextDavinci003,
-		Prompt:      prompt + "\nAI:",
-		MaxTokens:   256,
+		Prompt:      prompt,
+		MaxTokens:   412,
 		Temperature: 0.8,
 		Stop: []string{
 			// "Human:",
@@ -34,10 +35,6 @@ func MakePrompt(prompt string, apiKey string, object slack.SlackEvent) (response
 		log.Println("Received GPT Completion:\n\n", resp.Choices[0].Text)
 	}
 
-	err = slack.SendMessage(resp.Choices[0].Text, object)
-	if err != nil {
-		log.Println("[WARNING] Unable to send Slack Message:", err)
-	}
 	return resp.Choices[0].Text
 }
 
@@ -73,4 +70,15 @@ func CheckPromptType(prompt string, apiKey string) (response string) {
 		return resp.Choices[0].Text
 	}
 
+}
+
+func CreateHistoricPrompt(history map[string]string, newPrompt string) (prompt string) {
+	var res string
+
+	for key, value := range history {
+		res += fmt.Sprintf("Colleague:%s\nAI:%s\n", key, value)
+	}
+
+	res += fmt.Sprintf("Colleague:%s\nAI:", newPrompt)
+	return res
 }
