@@ -50,11 +50,11 @@ func InitDatabase() *gorm.DB {
 	return db
 }
 
-func SaveToDatabase(event slack.SlackEvent, completion string) {
+func SaveToDatabase(event slack.SlackEvent, completion *string) {
 	db := InitDatabase()
 	db.Create(&Message{
 		Prompt:         event.Event.Blocks[0].Elements1[0].Elements2[1].UserText,
-		Completion:     completion,
+		Completion:     *completion,
 		User:           event.Event.Blocks[0].Elements1[0].Elements2[0].UserID,
 		TimeStamp:      event.Event.TS,
 		ThreadTS:       event.Event.ThreadTS,

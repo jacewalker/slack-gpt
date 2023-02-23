@@ -61,8 +61,8 @@ type SlackEvent struct {
 	EventContext       string `json:"event_context"`
 }
 
-func RespondToChallenge(challenge string, c *gin.Context) {
-	jsonStr := []byte(`{"challenge":"` + challenge + `"}`)
+func RespondToChallenge(challenge *string, c *gin.Context) {
+	jsonStr := []byte(`{"challenge":"` + *challenge + `"}`)
 	fmt.Println("Challenge Response:", string(jsonStr))
 	c.JSON(http.StatusOK, string(jsonStr))
 }
@@ -105,14 +105,14 @@ func textToJSONString(text, thread string) ([]byte, error) {
 	return textJSONBytes, nil
 }
 
-func SendMessage(response string, object SlackEvent) error {
+func SendMessage(response *string, object *SlackEvent) error {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 	webhookUrl := os.Getenv("SLACK_AICHATBOT_URL")
 
-	jsonStr, err := textToJSONString(response, object.Event.TS)
+	jsonStr, err := textToJSONString(*response, object.Event.TS)
 	if err != nil {
 		log.Print("[WARNING] Failure converting outgoing message to JSON:", err)
 	}

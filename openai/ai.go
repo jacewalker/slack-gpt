@@ -11,7 +11,7 @@ import (
 	gogpt "github.com/sashabaranov/go-gpt3"
 )
 
-func MakePrompt(prompt string, apiKey *string, object slack.SlackEvent) (response string) {
+func MakePrompt(prompt string, apiKey *string, object *slack.SlackEvent) (response string) {
 	c := gogpt.NewClient(*apiKey)
 	ctx := context.Background()
 
@@ -73,7 +73,6 @@ func CheckPromptType(prompt string, apiKey string) (response string) {
 	} else {
 		return resp.Choices[0].Text
 	}
-
 }
 
 func CreateHistoricPrompt(history map[string]string, newPrompt string) (prompt string) {
