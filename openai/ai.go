@@ -44,15 +44,30 @@ func CheckPromptType(prompt string, apiKey string) (response string) {
 	ctx := context.Background()
 
 	req := gogpt.CompletionRequest{
-		Model:       gogpt.GPT3TextAda001,
-		Prompt:      "Types of phrases:\n0 = \"Request for information\"\n1 = \"Request to open a support ticket\"\n\nThe following are phrases and their corresponding type:\n\nPhrase: \"can you log a ticket for this?\"\nType: 1\n\nPhrase: \"provide a powershell example that lists files in a directory\"\nType: 0\n\nPhrase: \"open a ticket for this\"\nType: 1\n\nPhrase: \"@askgpt open a case for this\"\nType: 1\n\nPhrase: \"What does RAM do?\"\nType: 0\n\nPhrase: \"@askgpt log a ticket\"\nType: 1\nPhrase: " + prompt + "\nType:",
+		Model: gogpt.GPT3TextAda001,
+		Prompt: `Text: "log a ticket for this"
+		Label: "ticket"
+		---
+		Text: "can you put a ticket in"
+		Label: "ticket"
+		---
+		Text: "can you help me with this problem"
+		Label: "no ticket"
+		---
+		Text: "open a ticket for this issue"
+		Label: "ticket"
+		---
+		Text: "this is not an issue, just a question"
+		Label: "no ticket"
+		---
+		Text: ` + prompt + `
+		Label:
+		`,
 		MaxTokens:   1,
-		Temperature: 0.5,
+		Temperature: 0,
 		Stop: []string{
-			"Phrase:",
-			"Type:",
+			"---",
 		},
-		BestOf: 3,
 	}
 
 	resp, err := c.CreateCompletion(ctx, req)
@@ -66,12 +81,12 @@ func CheckPromptType(prompt string, apiKey string) (response string) {
 		log.Println("Received GPT Completion:\n\n", resp.Choices[0].Text)
 	}
 
-	if strings.Contains(resp.Choices[0].Text, "0") {
-		return "0"
-	} else if strings.Contains(resp.Choices[0].Text, "1") {
-		return "1"
+	if strings.Contains(resp.Choices[0].Text, "no ticket") {
+		log.Println("No ticket to be logged.")
+		return "not today sunnyboy"
 	} else {
-		return resp.Choices[0].Text
+		log.Println("Logging a ticket.")
+		return "its a day for happiness"
 	}
 }
 

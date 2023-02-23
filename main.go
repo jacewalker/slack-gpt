@@ -98,7 +98,8 @@ func processResponse(chat *AskGPT) {
 		email.SendEmail("jacewalker@me.com", emailMessage)
 	}
 
-	// respType := openai.CheckPromptType(prompt, apiKey)
+	// respType := openai.CheckPromptType(chat.Prompt, chat.APIKey)
+	// fmt.Println(respType)
 	// fmt.Println("Response Type is", respType)
 
 	// switch respType {
