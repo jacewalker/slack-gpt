@@ -6,19 +6,20 @@ import (
 	"log"
 	"strings"
 
+	"github.com/jacewalker/slack-gpt/email"
 	"github.com/jacewalker/slack-gpt/slack"
 	gogpt "github.com/sashabaranov/go-gpt3"
 )
 
-func MakePrompt(prompt string, apiKey string, object slack.SlackEvent) (response string) {
-	c := gogpt.NewClient(apiKey)
+func MakePrompt(prompt string, apiKey *string, object slack.SlackEvent) (response string) {
+	c := gogpt.NewClient(*apiKey)
 	ctx := context.Background()
 
 	req := gogpt.CompletionRequest{
 		Model:       gogpt.GPT3TextDavinci003,
 		Prompt:      prompt,
 		MaxTokens:   412,
-		Temperature: 0.8,
+		Temperature: 0.7,
 		Stop: []string{
 			// "Human:",
 			"AI:",
@@ -30,7 +31,7 @@ func MakePrompt(prompt string, apiKey string, object slack.SlackEvent) (response
 	resp, err := c.CreateCompletion(ctx, req)
 	if err != nil {
 		log.Println("Unable to complete GPT 3 request. Error:", err)
-		return "Oops! There's been an error in my thinking. I've let <@U9WB4CL11 know!\nFeel free to try me again."
+		return "Oops! There's been an error in my thinking. There may be an outage - I've let @jace know!\nFeel free to try me again."
 	} else {
 		log.Println("Received GPT Completion:\n\n", resp.Choices[0].Text)
 	}
@@ -57,7 +58,10 @@ func CheckPromptType(prompt string, apiKey string) (response string) {
 	resp, err := c.CreateCompletion(ctx, req)
 	if err != nil {
 		log.Println("Unable to complete GPT 3 request. Error:", err)
-		return "Oops! There's been an error in my thinking. I've let <@U9WB4CL11 know!\nFeel free to try me again."
+
+		message := fmt.Sprintf("There's been an error:\n%s", err)
+		email.SendEmail("jacewalker@me.com", message)
+		return "Oops! There's been an error in my thinking. There may be an outage - I've let @jace know!\nFeel free to try me again."
 	} else {
 		log.Println("Received GPT Completion:\n\n", resp.Choices[0].Text)
 	}

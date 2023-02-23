@@ -82,7 +82,6 @@ func ParsePostRequest(c *gin.Context) (object SlackEvent, challenge string) {
 		log.Println("[INFO] Client IP Address:", c.ClientIP())
 		log.Println("[INFO] User Provided Text:", result.Event.Blocks[0].Elements1[0].Elements2[1].UserText)
 
-		// os.WriteFile("./postrequests/json-postrequest-"+time.Now().String()+".json", bodyAsByteArray, 0744)
 		return result, ""
 	}
 }
@@ -125,5 +124,4 @@ func SendMessage(response string, object SlackEvent) error {
 	} else {
 		return nil
 	}
-
 }
