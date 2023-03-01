@@ -5,7 +5,7 @@ go 1.20
 require (
 	github.com/gin-gonic/gin v1.8.2
 	github.com/joho/godotenv v1.5.0
-	github.com/sashabaranov/go-gpt3 v0.0.0-20230128191859-3695eb3ade92
+	github.com/sashabaranov/go-gpt3 v1.3.0
 )
 
 require (

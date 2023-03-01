@@ -39,6 +39,32 @@ func MakePrompt(prompt string, apiKey *string, object *slack.SlackEvent) (respon
 	return resp.Choices[0].Text
 }
 
+func MakeChatPrompt(prompt string, apiKey *string, history []gogpt.ChatCompletionMessage) (response string) {
+	c := gogpt.NewClient(*apiKey)
+	ctx := context.Background()
+
+	message := []gogpt.ChatCompletionMessage{
+		{Role: "system", Content: "You are a helpful assistant named Otto built to help Otto IT with technical support questions and script writing."},
+	}
+	message = append(history, gogpt.ChatCompletionMessage{Role: "user", Content: prompt})
+
+	fmt.Println("FULL MESSEAGE: ", message)
+
+	req := gogpt.ChatCompletionRequest{
+		Model:    gogpt.GPT3Dot5Turbo,
+		Messages: message,
+	}
+
+	resp, err := c.CreateChatCompletion(ctx, req)
+	if err != nil {
+		log.Println("Error:", err)
+	} else {
+		log.Println("Received Chat Completion Response: ", resp.Choices[0].Message.Content)
+	}
+
+	return resp.Choices[0].Message.Content
+}
+
 func CheckPromptType(prompt string, apiKey string) (response string) {
 	c := gogpt.NewClient(apiKey)
 	ctx := context.Background()
@@ -98,5 +124,18 @@ func CreateHistoricPrompt(history map[string]string, newPrompt string) (prompt s
 	}
 
 	res += fmt.Sprintf("Colleague:%s\nAI:", newPrompt)
+	return res
+}
+
+func CreateHistoricChatPrompt(history map[string]string, newPrompt string) (chatHistory []gogpt.ChatCompletionMessage) {
+	var res []gogpt.ChatCompletionMessage
+
+	for key, value := range history {
+		res = append(res, gogpt.ChatCompletionMessage{Role: "assistant", Content: key})
+		res = append(res, gogpt.ChatCompletionMessage{Role: "user", Content: value})
+	}
+
+	res = append(res, gogpt.ChatCompletionMessage{Role: "system", Content: "You are a helpful assistant named Otto built to help Otto IT with technical support questions and script writing."})
+
 	return res
 }

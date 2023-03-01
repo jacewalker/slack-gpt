@@ -1,4 +1,4 @@
-// running on PID 4128995
+// running on PID 373193
 // nohup ./myexecutable &
 // kill <pid>
 
@@ -85,10 +85,12 @@ func main() {
 func processResponse(chat *AskGPT) {
 	chat.Prompt = chat.SlackObject.Event.Blocks[0].Elements1[0].Elements2[1].UserText
 	historyMap, _ := dbops.LookupFromDatabase(chat.SlackObject.Event.ThreadTS)
-	history := openai.CreateHistoricPrompt(historyMap, chat.Prompt)
+	// history := openai.CreateHistoricPrompt(historyMap, chat.Prompt)
+	history := openai.CreateHistoricChatPrompt(historyMap, chat.Prompt)
 	fmt.Println("History String:\n", history)
 
-	completion := openai.MakePrompt(history, &chat.APIKey, &chat.SlackObject)
+	// completion := openai.MakePrompt(history, &chat.APIKey, &chat.SlackObject)
+	completion := openai.MakeChatPrompt(chat.Prompt, &chat.APIKey, history)
 	dbops.SaveToDatabase(chat.SlackObject, &completion)
 
 	err := slack.SendMessage(&completion, &chat.SlackObject)

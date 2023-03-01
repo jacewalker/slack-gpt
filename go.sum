@@ -50,6 +50,8 @@ github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTE
 github.com/rogpeppe/go-internal v1.8.0/go.mod h1:WmiCO8CzOY8rg0OYDC4/i/2WRWAB6poM+XZ2dLUbcbE=
 github.com/sashabaranov/go-gpt3 v0.0.0-20230128191859-3695eb3ade92 h1:bn0s4wtByB3cLYZZknK4NJG37MvojJ9o1hCzXAwpf7U=
 github.com/sashabaranov/go-gpt3 v0.0.0-20230128191859-3695eb3ade92/go.mod h1:BIZdbwdzxZbCrcKGMGH6u2eyGe1xFuX9Anmh3tCP8lQ=
+github.com/sashabaranov/go-gpt3 v1.3.0 h1:IbvaK2yTnlm7f/oiC2HC9cbzu/4Znt4GkarFiwZ60uI=
+github.com/sashabaranov/go-gpt3 v1.3.0/go.mod h1:BIZdbwdzxZbCrcKGMGH6u2eyGe1xFuX9Anmh3tCP8lQ=
 github.com/smtp2go-oss/smtp2go-go v1.0.1 h1:rwcoNLjOyigOzCjKp/guylKY/xJpoeypSxgtcC/g6DA=
 github.com/smtp2go-oss/smtp2go-go v1.0.1/go.mod h1:lkv36awQXRBWAvnd517FFESKvne8465KCu90lPThcEY=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
