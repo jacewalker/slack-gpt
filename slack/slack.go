@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -74,10 +75,18 @@ func ParsePostRequest(c *gin.Context) (object SlackEvent, challenge string) {
 		log.Println(err)
 	}
 
+	// Write the JSON request to a file
+	filename := fmt.Sprintf("postrequests/%d.json", time.Now().UnixNano())
+	if err := ioutil.WriteFile(filename, bodyAsByteArray, 0644); err != nil {
+		log.Println("Error writing JSON request to file:", err)
+	}
+
 	if result.Challenge != "" {
 		log.Println("[INFO] Received Challenge Request:", result.Challenge)
 		return result, result.Challenge
 	} else {
+		// log.Println("[ALERT] Event:", result.Event, "\n")
+		// log.Println("[ALERT] Blocks:", result.Event.Blocks[0].Elements1[0], "\n")
 		log.Println("[INFO] Received POST Request from", c.Request.UserAgent())
 		log.Println("[INFO] Client IP Address:", c.ClientIP())
 		log.Println("[INFO] User Provided Text:", result.Event.Blocks[0].Elements1[0].Elements2[1].UserText)

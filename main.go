@@ -39,7 +39,18 @@ func main() {
 
 	r.POST("/api/slack", func(c *gin.Context) {
 		c.Status(200)
-		go SlackPostRequest(c, &chat)
+		chat.SlackObject, chat.SlackChallenge = slack.ParsePostRequest(c)
+
+		if chat.SlackChallenge != "" {
+			slack.RespondToChallenge(&chat.SlackChallenge, c)
+		}
+
+		switch chat.SlackObject.Event.Type {
+		case "app_mention":
+			go processResponse(&chat)
+		default:
+			fmt.Println("Unknown request! Maybe a challenge?")
+		}
 	})
 
 	r.POST("/api/openai-status", func(c *gin.Context) {
@@ -59,29 +70,14 @@ func main() {
 	r.Run(":8080")
 }
 
-func SlackPostRequest(c *gin.Context, chat *AskGPT) {
-	chat.SlackObject, chat.SlackChallenge = slack.ParsePostRequest(c)
-
-	if chat.SlackChallenge != "" {
-		slack.RespondToChallenge(&chat.SlackChallenge, c)
-	}
-
-	switch chat.SlackObject.Event.Type {
-	case "app_mention":
-		processResponse(chat)
-	default:
-		fmt.Println("Unknown request! Maybe a challenge?")
-	}
-}
-
 func processResponse(chat *AskGPT) {
 	chat.Prompt = chat.SlackObject.Event.Blocks[0].Elements1[0].Elements2[1].UserText
 
 	var respType string
 
-	// if strings.Contains(chat.Prompt, "ticket") {
-	// 	respType = openai.CheckPromptType(chat.Prompt, &chat.APIKey)
-	// }
+	if strings.Contains(chat.Prompt, "ticket") {
+		respType = openai.CheckPromptType(chat.Prompt, &chat.APIKey)
+	}
 
 	switch {
 	case respType == "" || strings.Contains(respType, "0"):
@@ -103,7 +99,7 @@ func processResponse(chat *AskGPT) {
 		success := email.SendEmail("jacewalker@me.com", "New Ticket Logged!")
 		var response string
 		if success {
-			response = "Ok, I have logged a ticket for this!"
+			response = "[You've found a feature that's coming soon!]"
 		} else {
 			response = "I tried logging a ticket but had an issue sending the email to support@ottoit.com.au. Log it manually for now until I get myself sorted."
 		}
