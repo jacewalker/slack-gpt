@@ -2,9 +2,11 @@ package openai
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
-	gogpt "github.com/sashabaranov/go-gpt3"
+	gogpt "github.com/sashabaranov/go-openai"
 )
 
 func MakeChatPrompt(prompt string, apiKey *string, history []gogpt.ChatCompletionMessage) (response string) {
@@ -19,9 +21,20 @@ func MakeChatPrompt(prompt string, apiKey *string, history []gogpt.ChatCompletio
 		message = append(history, gogpt.ChatCompletionMessage{Role: "user", Content: prompt})
 	}
 
-	req := gogpt.ChatCompletionRequest{
-		Model:    gogpt.GPT3Dot5Turbo,
-		Messages: message,
+	var req gogpt.ChatCompletionRequest
+
+	if strings.Contains(prompt, "pretty please") {
+		fmt.Println("Using GPT-4...")
+		req = gogpt.ChatCompletionRequest{
+			Model:    gogpt.GPT4,
+			Messages: message,
+		}
+	} else {
+		fmt.Println("Using GPT-3.5...")
+		req = gogpt.ChatCompletionRequest{
+			Model:    gogpt.GPT3Dot5Turbo,
+			Messages: message,
+		}
 	}
 
 	resp, err := c.CreateChatCompletion(ctx, req)
