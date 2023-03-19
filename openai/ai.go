@@ -40,11 +40,11 @@ func MakeChatPrompt(prompt string, apiKey *string, history []gogpt.ChatCompletio
 	resp, err := c.CreateChatCompletion(ctx, req)
 	if err != nil {
 		log.Println("Error:", err)
+		return "I couldn't get a response from OpenAI, try sending that message again."
 	} else {
 		log.Println("Received Chat Completion Response: ", resp.Choices[0].Message.Content)
+		return resp.Choices[0].Message.Content
 	}
-
-	return resp.Choices[0].Message.Content
 }
 
 func CheckPromptType(prompt string, apiKey *string) (response string) {
