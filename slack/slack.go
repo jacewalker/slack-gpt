@@ -117,7 +117,7 @@ func textToJSONString(text, thread string) ([]byte, error) {
 func SendMessage(response *string, object *SlackEvent) error {
 	err := godotenv.Load(".env")
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("Error loading .env file")
 	}
 	webhookUrl := os.Getenv("SLACK_AICHATBOT_URL")
 

@@ -1,4 +1,4 @@
-// running on PID 1286356
+// running on PID 73599
 // nohup ./myexecutable &
 // kill <pid>
 
@@ -31,7 +31,7 @@ func main() {
 	r := gin.Default()
 
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("Error loading .env file")
 	}
 
 	chat := AskGPT{}
@@ -67,7 +67,7 @@ func main() {
 		c.Status(http.StatusOK)
 	})
 
-	r.Run(":8080")
+	r.Run(":80")
 }
 
 func processResponse(chat *AskGPT) {

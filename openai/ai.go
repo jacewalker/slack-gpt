@@ -37,7 +37,9 @@ func MakeChatPrompt(prompt string, apiKey *string, history []gogpt.ChatCompletio
 		}
 	}
 
+	fmt.Println("Contacting OpenAI...")
 	resp, err := c.CreateChatCompletion(ctx, req)
+	fmt.Println("Received response from OpenAI...")
 	if err != nil {
 		log.Println("Error:", err)
 		return "I couldn't get a response from OpenAI, try sending that message again."
