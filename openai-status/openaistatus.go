@@ -65,8 +65,8 @@ type PostRequest struct {
 
 func (pr *PostRequest) NotifyOutage() {
 	log.Info().Msgf("OpenAI is currently experiencing an outage: %s\n", pr.Incident.Name)
-	outageEmailMessage := fmt.Sprintf(`OpenAI is currently experiencing an outage: %s
-	Additional information can be found here: %s`, pr.Incident.Name, pr.Incident.Shortlink)
+	outageEmailMessage := fmt.Sprintf(`OpenAI is currently experiencing an outage: %s <br>
+	Additional information can be found here: %s `, pr.Incident.Name, pr.Incident.Shortlink)
 	go email.SendEmail("jacewalker@me.com", outageEmailMessage)
 }
 

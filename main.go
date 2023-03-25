@@ -70,20 +70,6 @@ func main() {
 
 	r.POST("/api/openai-status", openaistatus.StatusUpdate)
 
-	// r.POST("/api/openai-status", func(c *gin.Context) {
-	// 	var body map[string]interface{}
-	// 	if err := c.BindJSON(&body); err != nil {
-	// 		c.AbortWithError(http.StatusBadRequest, err)
-	// 		return
-	// 	}
-
-	// 	log.Info().Msgf("OpenAI is currently experiencing an outage: %s\n", body["message"].(string))
-	// 	outageEmailMessage := fmt.Sprintf("OpenAI is currently experiencing an outage: %s\n", body["message"].(string))
-	// 	go email.SendEmail("jacewalker@me.com", outageEmailMessage)
-
-	// 	c.Status(http.StatusOK)
-	// })
-
 	r.Run(":80")
 }
 
