@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"github.com/rs/zerolog/log"
 )
 
 type SlackChallenge struct {
@@ -64,7 +63,7 @@ type SlackEvent struct {
 
 func RespondToChallenge(challenge *string, c *gin.Context) {
 	jsonStr := []byte(`{"challenge":"` + *challenge + `"}`)
-	fmt.Println("Challenge Response:", string(jsonStr))
+	log.Info().Msgf("Challenge Response:", string(jsonStr))
 	c.JSON(http.StatusOK, string(jsonStr))
 }
 
@@ -72,25 +71,23 @@ func ParsePostRequest(c *gin.Context) (object SlackEvent, challenge string) {
 	var result SlackEvent
 	bodyAsByteArray, _ := ioutil.ReadAll(c.Request.Body)
 	if err := json.Unmarshal(bodyAsByteArray, &result); err != nil {
-		log.Println(err)
+		log.Info().Msg(err.Error())
 	}
 
 	// Write the JSON request to a file
 	filename := fmt.Sprintf("postrequests/%d.json", time.Now().UnixNano())
 	if err := ioutil.WriteFile(filename, bodyAsByteArray, 0644); err != nil {
-		log.Println("Error writing JSON request to file:", err)
+		log.Info().Msgf("Error writing JSON request to file:", err)
 	}
 
 	if result.Challenge != "" {
-		log.Println("[INFO] Received Challenge Request:", result.Challenge)
+		log.Info().Msgf("[INFO] Received Challenge Request:", result.Challenge)
 		return result, result.Challenge
 	} else {
-		// log.Println("[ALERT] Event:", result.Event, "\n")
-		// log.Println("[ALERT] Blocks:", result.Event.Blocks[0].Elements1[0], "\n")
-		log.Println("[INFO] Received POST Request from", c.Request.UserAgent())
-		log.Println("[INFO] Client IP Address:", c.ClientIP())
-		log.Println("[INFO] User Provided Text:", result.Event.Blocks[0].Elements1[0].Elements2[1].UserText)
-
+		log.Info().Msgf("[INFO] Received POST Request from", c.Request.UserAgent())
+		log.Info().Msgf("[INFO] Client IP Address:", c.ClientIP())
+		// log.Info().Msgf("[INFO] User Provided Text:", result.Event.Blocks[0].Elements1[0].Elements2[1].UserText)
+		log.Info().Msgf("[INFO] User Provided Text:", result.Event.Text)
 		return result, ""
 	}
 }
@@ -115,20 +112,20 @@ func textToJSONString(text, thread string) ([]byte, error) {
 }
 
 func SendMessage(response *string, object *SlackEvent) error {
-	err := godotenv.Load(".env")
-	if err != nil {
-		log.Println("Error loading .env file")
-	}
+	// err := godotenv.Load(".env")
+	// if err != nil {
+	// 	log.Info().Msgf("Error loading .env file")
+	// }
 	webhookUrl := os.Getenv("SLACK_AICHATBOT_URL")
 
 	jsonStr, err := textToJSONString(*response, object.Event.TS)
 	if err != nil {
-		log.Print("[WARNING] Failure converting outgoing message to JSON:", err)
+		log.Info().Msgf("[WARNING] Failure converting outgoing message to JSON:", err)
 	}
 
 	resp, err := http.Post(webhookUrl, "application/json", bytes.NewBuffer(jsonStr))
 	if err != nil || resp.StatusCode != 200 {
-		fmt.Println("Error not nil or resp not 200, resp:", resp)
+		log.Info().Msgf("Error not nil or resp not 200, resp:", resp)
 		return err
 	} else {
 		return nil

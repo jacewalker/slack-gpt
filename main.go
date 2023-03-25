@@ -6,8 +6,6 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 	"strings"
 
@@ -15,8 +13,12 @@ import (
 	"github.com/jacewalker/slack-gpt/dbops"
 	"github.com/jacewalker/slack-gpt/email"
 	"github.com/jacewalker/slack-gpt/openai"
+	openaistatus "github.com/jacewalker/slack-gpt/openai-status"
 	"github.com/jacewalker/slack-gpt/slack"
 	"github.com/joho/godotenv"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
 type AskGPT struct {
@@ -25,20 +27,32 @@ type AskGPT struct {
 	SlackChallenge string
 	EventType      string
 	Prompt         string
+	Database       *gorm.DB
 }
 
 func main() {
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	r := gin.Default()
 
 	if err := godotenv.Load(".env"); err != nil {
-		log.Println("Error loading .env file")
+		log.Info().Msg(".env file not found. Using environment variables.")
 	}
 
 	chat := AskGPT{}
 	chat.APIKey = os.Getenv("OPENAI_AUTHKEY")
+	chat.Database = dbops.InitDatabase()
 
 	r.POST("/api/slack", func(c *gin.Context) {
 		c.Status(200)
+
+		if ct := c.ContentType(); ct != "application/json" {
+			log.Error().Msgf("Content Type Error: %s", ct)
+			c.AbortWithStatusJSON(415, gin.H{
+				"error": "Invalid Content Type, expected application/json",
+			})
+			return
+		}
+
 		chat.SlackObject, chat.SlackChallenge = slack.ParsePostRequest(c)
 
 		if chat.SlackChallenge != "" {
@@ -49,53 +63,59 @@ func main() {
 		case "app_mention":
 			go processResponse(&chat)
 		default:
-			fmt.Println("Unknown request! Maybe a challenge?")
+			log.Debug().Msg("Unknown request... Maybe a challenge?")
+			log.Debug().Msg(chat.SlackObject.Event.Type)
 		}
 	})
 
-	r.POST("/api/openai-status", func(c *gin.Context) {
-		var body map[string]interface{}
-		if err := c.BindJSON(&body); err != nil {
-			c.AbortWithError(http.StatusBadRequest, err)
-			return
-		}
+	r.POST("/api/openai-status", openaistatus.StatusUpdate)
 
-		fmt.Printf("OpenAI is currently experiencing an outage: %s\n", body["message"].(string))
-		outageEmailMessage := fmt.Sprintf("OpenAI is currently experiencing an outage: %s\n", body["message"].(string))
-		go email.SendEmail("jacewalker@me.com", outageEmailMessage)
+	// r.POST("/api/openai-status", func(c *gin.Context) {
+	// 	var body map[string]interface{}
+	// 	if err := c.BindJSON(&body); err != nil {
+	// 		c.AbortWithError(http.StatusBadRequest, err)
+	// 		return
+	// 	}
 
-		c.Status(http.StatusOK)
-	})
+	// 	log.Info().Msgf("OpenAI is currently experiencing an outage: %s\n", body["message"].(string))
+	// 	outageEmailMessage := fmt.Sprintf("OpenAI is currently experiencing an outage: %s\n", body["message"].(string))
+	// 	go email.SendEmail("jacewalker@me.com", outageEmailMessage)
+
+	// 	c.Status(http.StatusOK)
+	// })
 
 	r.Run(":80")
 }
 
 func processResponse(chat *AskGPT) {
-	chat.Prompt = chat.SlackObject.Event.Blocks[0].Elements1[0].Elements2[1].UserText
+	// chat.Prompt = chat.SlackObject.Event.Blocks[0].Elements1[0].Elements2[1].UserText
+	log.Info().Msg("Received App Mention from Slack")
+	chat.Prompt = chat.SlackObject.Event.Text
 
 	var respType string
 
 	if strings.Contains(chat.Prompt, "ticket") {
+		log.Info().Msg("Slack Message contains 'ticket' trigger word.")
 		respType = openai.CheckPromptType(chat.Prompt, &chat.APIKey)
 	}
 
 	switch {
 	case respType == "" || strings.Contains(respType, "0"):
-		historyMap, _ := dbops.LookupFromDatabase(chat.SlackObject.Event.ThreadTS)
+		historyMap, _ := dbops.LookupFromDatabase(&chat.SlackObject.Event.ThreadTS, chat.Database)
 		history := openai.CreateHistoricChatPrompt(historyMap, chat.Prompt)
-		fmt.Println("History String:\n", history)
 
 		completion := openai.MakeChatPrompt(chat.Prompt, &chat.APIKey, history)
-		dbops.SaveToDatabase(chat.SlackObject, &completion)
+		go dbops.SaveToDatabase(&chat.SlackObject, &completion, chat.Database)
 
 		err := slack.SendMessage(&completion, &chat.SlackObject)
+		log.Info().Msg("Sent response to the Slack thread")
 		if err != nil {
-			log.Println("[WARNING] Unable to send Slack Message:", err)
+			log.Error().Msgf("[WARNING] Unable to send Slack Message:", err)
 			emailMessage := fmt.Sprintf("Failed to respond to Slack message with error: %s\n", err)
 			email.SendEmail("jacewalker@me.com", emailMessage)
 		}
 	case strings.Contains(respType, "1"):
-		fmt.Println("1: Logging a ticket")
+		log.Info().Msg("1: Logging a ticket")
 		success := email.SendEmail("jacewalker@me.com", "New Ticket Logged!")
 		var response string
 		if success {
@@ -105,7 +125,7 @@ func processResponse(chat *AskGPT) {
 		}
 		go slack.SendMessage(&response, &chat.SlackObject)
 	default:
-		fmt.Println("Unsure")
+		log.Error().Msg("Unsure")
 	}
 
 }

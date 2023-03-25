@@ -3,6 +3,7 @@ package email
 import (
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	"github.com/smtp2go-oss/smtp2go-go"
 )
 
@@ -20,9 +21,9 @@ func SendEmail(recipient string, message string) (sent bool) {
 	}
 	_, err := smtp2go.Send(&email)
 	if err != nil {
-		fmt.Println("An Error Occurred:", err)
+		log.Error().Msgf("An Error Occurred:", err)
 		return false
 	}
-	fmt.Println("Sent Successfully")
+	log.Info().Msg("Sent Successfully")
 	return true
 }
